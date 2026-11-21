@@ -335,6 +335,7 @@ import org.camunda.bpm.engine.impl.runtime.ConditionHandler;
 import org.camunda.bpm.engine.impl.runtime.CorrelationHandler;
 import org.camunda.bpm.engine.impl.runtime.DefaultConditionHandler;
 import org.camunda.bpm.engine.impl.runtime.DefaultCorrelationHandler;
+import org.camunda.bpm.engine.impl.query.DefaultQueryExpressionValidator;
 import org.camunda.bpm.engine.impl.runtime.DefaultDeserializationTypeValidator;
 import org.camunda.bpm.engine.impl.scripting.ScriptFactory;
 import org.camunda.bpm.engine.impl.scripting.engine.BeansResolverFactory;
@@ -374,6 +375,7 @@ import org.camunda.bpm.engine.impl.variable.serializer.TypedValueSerializer;
 import org.camunda.bpm.engine.impl.variable.serializer.VariableSerializerFactory;
 import org.camunda.bpm.engine.impl.variable.serializer.VariableSerializers;
 import org.camunda.bpm.engine.management.Metrics;
+import org.camunda.bpm.engine.query.QueryExpressionValidator;
 import org.camunda.bpm.engine.repository.CaseDefinition;
 import org.camunda.bpm.engine.repository.DecisionDefinition;
 import org.camunda.bpm.engine.repository.DecisionRequirementsDefinition;
@@ -845,6 +847,9 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   protected boolean enableExpressionsInAdhocQueries = false;
   protected boolean enableExpressionsInStoredQueries = true;
 
+  /** validates the text of expressions in queries before they are evaluated */
+  protected QueryExpressionValidator queryExpressionValidator;
+
   /**
    * If false, disables XML eXternal Entity (XXE) Processing. This provides protection against XXE Processing attacks.
    */
@@ -1164,6 +1169,7 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     initSessionFactories();
     initValueTypeResolver();
     initTypeValidator();
+    initQueryExpressionValidator();
     initSerialization();
     initDelegateInterceptor();
     initEventHandlers();
@@ -1207,6 +1213,12 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
       WhitelistingDeserializationTypeValidator validator = (WhitelistingDeserializationTypeValidator) deserializationTypeValidator;
       validator.setAllowedClasses(deserializationAllowedClasses);
       validator.setAllowedPackages(deserializationAllowedPackages);
+    }
+  }
+
+  protected void initQueryExpressionValidator() {
+    if (queryExpressionValidator == null) {
+      queryExpressionValidator = new DefaultQueryExpressionValidator(this);
     }
   }
 
@@ -4520,6 +4532,14 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public void setEnableExpressionsInStoredQueries(boolean enableExpressionsInStoredQueries) {
     this.enableExpressionsInStoredQueries = enableExpressionsInStoredQueries;
+  }
+
+  public QueryExpressionValidator getQueryExpressionValidator() {
+    return queryExpressionValidator;
+  }
+
+  public void setQueryExpressionValidator(QueryExpressionValidator queryExpressionValidator) {
+    this.queryExpressionValidator = queryExpressionValidator;
   }
 
   public boolean isEnableXxeProcessing() {
